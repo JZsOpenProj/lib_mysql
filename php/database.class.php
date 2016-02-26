@@ -1,6 +1,4 @@
 <?php
-require_once("../config/db_config.php");
-
 class Mysql{
 	private $link;
 	private $db_config;
@@ -10,7 +8,7 @@ class Mysql{
 
 	private $goneaway=5;
 
-	//æ„é€ å‡½æ•°åˆå§‹åŒ–
+	//¹¹Ôìº¯Êı³õÊ¼»¯
 	public function __construct(){
 		$this->time=microtime(True);
 		$this->db_config=$GLOBALS['_config']['db'];
@@ -19,7 +17,7 @@ class Mysql{
 			$this->handle=fopen($this->db_config['logpath'].'dblog.txt','a+');
 		}
 	}
-	//è¿æ¥æ•°æ®åº“
+	//Á¬½ÓÊı¾İ¿â
 	private function connect($dbhost,$dbuser,$dbpasswd,$dbname,$pconnect=0,$charset='utf8'){
 		if($pconnect){
 			if(!$this->link=mysql_pconnect($dbhost,$dbuser,$dbpasswd)){
@@ -44,7 +42,7 @@ class Mysql{
 			$this->halt('database select failed');
 		}
 	}
-	//æŸ¥è¯¢
+	//²éÑ¯
 	private function query($sql){
 		$this->write_log("sqlQuery:".$sql);
 		$query=mysql_query($sql,$this->link);
@@ -54,7 +52,7 @@ class Mysql{
 		return $query;
 	}
 
-	//è·å–ä¸€æ¡è®°å½• MYSQL_ASSOC,MYSQL_NUM,MYSQL_BOTH
+	//»ñÈ¡Ò»Ìõ¼ÇÂ¼ MYSQL_ASSOC,MYSQL_NUM,MYSQL_BOTH
 	public function get_one($list,$table,$condition,$result_type=MYSQL_ASSOC){
 		$sql="SELECT $list FROM $table WHERE $condition LIMIT 0,1";
 		$query=$this->query($sql);
@@ -62,7 +60,8 @@ class Mysql{
 		$this->write_log('get one record '.$sql);
 		return $result;
 	}
-	//è·å–å…¨éƒ¨è®°å½•
+
+	//»ñÈ¡È«²¿¼ÇÂ¼
 	public function get_all($list,$table,$condition,$addition='',$key='',$result_type=MYSQL_ASSOC){
 		$sql="SELECT $list FROM $table WHERE $condition $addition";
 		$query=$this->query($sql);
@@ -74,7 +73,7 @@ class Mysql{
 		return $result;
 	}
 
-	//æ’å…¥
+	//²åÈë
 	public function insert($table,$dataArray){
 		$field='';
 		$value='';
@@ -96,7 +95,7 @@ class Mysql{
 		return mysql_affected_rows(); 
 	}
 
-	//æ›´æ–°
+	//¸üĞÂ
 	public function update($table,$dataArray,$condition=''){
 		if(!is_array($dataArray)||count($dataArray)<=0){
 			$this->halt('no data to update');
@@ -115,7 +114,7 @@ class Mysql{
 		return mysql_affected_rows();
 	}
 
-	//åˆ é™¤
+	//É¾³ı
 	public function delete($table,$condition=''){
 		if(empty($condition)){
 			$this->halt('no delete condition set');
@@ -128,13 +127,13 @@ class Mysql{
 		return true;
 	}
 
-	//è¿”å›ç»“æœé›†
+	//·µ»Ø½á¹û¼¯
 	public function fetch_array($query,$result_type=MYSQL_ASSOC){
 		$this->write_log('return fetch_array');
 		return mysql_fetch_array($query,$result_type);
 	}
 
-	//è·å–è®°å½•æ¡æ•°
+	//»ñÈ¡¼ÇÂ¼ÌõÊı
 	public function rows_num($result){
 		if(!is_bool($result)){
 			$num=mysql_num_rows($result);
@@ -145,7 +144,7 @@ class Mysql{
 		}
 	}
 
-	//é‡Šæ”¾ç»“æœé›†
+	//ÊÍ·Å½á¹û¼¯
 	public function free_result(){
 		$void=func_get_args();
 		foreach($void as $query){
@@ -156,35 +155,43 @@ class Mysql{
 		}
 	}
 
-	//è·å–æœ€åæ’å…¥çš„id
+	//»ñÈ¡×îºó²åÈëµÄid
 	public function insert_id(){
 		$id=mysql_insert_id($this->link);
 		$this->write_log('the id of last record is '.$id);
 		return $id;
 	}
 
-	//å…³é—­æ•°æ®åº“è¿æ¥
+	//¹Ø±ÕÊı¾İ¿âÁ¬½Ó
 	protected function close(){
 		$this->write_log('database connection closed');
 		return @mysql_close($this->link);
 	}
 
-	//è·å–ç‰ˆæœ¬ä¿¡æ¯
+	//»ñÈ¡°æ±¾ĞÅÏ¢
 	public function version(){
 		return mysql_get_server_info($this->link);
 	}
 
-	//é”™è¯¯æç¤º
+	//»ñÈ¡±íÖĞ¼ÇÂ¼µÄĞĞÊı
+	public function count_rows($table,$id='*'){
+		$sql="SELECT COUNT($id) FROM $table";
+		$query=$this->query($sql);
+		$this->write_log('count rows '.$sql);
+		return $query;
+	}
+
+	//´íÎóÌáÊ¾
 	protected function halt($message='',$sql=''){
 		$error=mysql_error();
 		$errno=mysql_errno();
-		if($errorno==2006 && $this->goneaway-- > 0){
+		if($errno==2006 && $this->goneaway-- > 0){
 			$this->connect($this->db_config['hostname'],$this->db_config['username'],$this->db_config['password'],$this->db_config['database'],$this->db_config['pconnect']);
 			$this->query($sql);
 		}else{
 			$s='';
 			if($message){
-				$s='Info: $message';
+				$s='Info: message ';
 			}
 			if($sql){
 				$s.='SQL: '.htmlspecialchars($sql);
@@ -196,7 +203,7 @@ class Mysql{
 		}
 	}
 
-	//å†™å…¥æ—¥å¿—æ–‡ä»¶
+	//Ğ´ÈëÈÕÖ¾ÎÄ¼ş
 	public function write_log($msg=''){
 		if($this->db_config['log']){
 			$text=date('Y-m-d H:i:s')." ".$msg."\r\n";
@@ -204,7 +211,7 @@ class Mysql{
 		}
 	}
 
-	//è¿”å›ä¸Šä¸€ä¸ªæ“ä½œç¼ ä¸Šçš„æ–‡æœ¬é”™è¯¯ä¿¡æ¯å’Œé”™è¯¯ç 
+	//·µ»ØÉÏÒ»¸ö²Ù×÷²øÉÏµÄÎÄ±¾´íÎóĞÅÏ¢ºÍ´íÎóÂë
 	function error(){
 		return (($this->link)?mysql_error($this->link):mysql_error());
 	}
@@ -212,7 +219,7 @@ class Mysql{
 		return intval(($this->link)?mysql_errno($this->link):mysql_errno());
 	}
 
-	//ææ„å‡½æ•°
+	//Îö¹¹º¯Êı
 	public function __destruct(){
 		$this->free_result();
 		$use_time=microtime(True)-$this->time;
